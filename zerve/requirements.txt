@@ -1,33 +1,16 @@
-# ==========================================================================
-# Zerve canvas / deployment environment
-# Add these under: Canvas -> Environments -> Requirements
-# (or the deployment's Requirements section). Pin versions if you need
-# strict reproducibility.
-# ==========================================================================
-
-# The flood-intelligence engine itself (exposes the `src` package).
-# Installing straight from GitHub makes `from src import ...` work in blocks.
 git+https://github.com/joashomondi/urban-flood-intelligence-platform.git
-
-# Core scientific + ML
 numpy>=1.24
 pandas>=2.0
 scipy>=1.10
 scikit-learn>=1.3
-
-# Visualization
 matplotlib>=3.7
 plotly>=5.18
 folium>=0.15
-
-# Optional (recommended) — geospatial + boosting + model persistence
 rasterio>=1.3
 shapely>=2.0
 geopandas>=0.14
 rasterstats>=0.19
 xgboost>=2.0
 joblib>=1.3
-
-# Deployment (Streamlit app)
 streamlit>=1.30
 streamlit-folium>=0.18
