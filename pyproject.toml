@@ -37,7 +37,8 @@ all = [
 Homepage = "https://github.com/joashomondi/urban-flood-intelligence-platform"
 Repository = "https://github.com/joashomondi/urban-flood-intelligence-platform"
 
-# The engine lives in the top-level ``src`` package so `from src import ...`
-# works after `pip install git+https://github.com/joashomondi/urban-flood-intelligence-platform`.
-[tool.setuptools]
-packages = ["src"]
+# Expose the top-level ``src`` package so `from src import ...` works after
+# `pip install git+https://github.com/joashomondi/urban-flood-intelligence-platform`.
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

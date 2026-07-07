@@ -8,6 +8,22 @@
 # Ingests the DEM + rainfall + vector layers for the study area (Nairobi).
 # Uses a real SRTM GeoTIFF / CHIRPS raster from data/raw if present, else
 # synthesises physically-plausible surfaces so the canvas runs anywhere.
+
+# Bootstrap: install the engine if the environment build skipped the git+ line.
+import subprocess
+import sys
+
+_ENGINE = "git+https://github.com/joashomondi/urban-flood-intelligence-platform.git"
+try:
+    import src  # noqa: F401
+except ModuleNotFoundError:
+    print("[01] Installing flood-intelligence engine from GitHub …")
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "install", "-q", _ENGINE],
+        stdout=subprocess.DEVNULL,
+    )
+    print("[01] Engine installed.")
+
 from src import data_loader, utils
 
 utils.ensure_dirs()
