@@ -25,9 +25,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
-import shutil
 import sys
-import tempfile
 import urllib.request
 from pathlib import Path
 
@@ -44,16 +42,14 @@ CHIRPS_MONTHLY = (
 )
 
 
-def _download(url: str, dest: Path) -> Path:
-    log.info("Downloading %s", url)
-    urllib.request.urlretrieve(url, dest)
-    log.info("  -> %s (%.1f MB)", dest.name, dest.stat().st_size / 1e6)
-    return dest
-
-
 def download_rainfall(output: Path | None = None,
                       year: int = 2024, month: int = 4) -> Path:
-    """Download a CHIRPS monthly raster and clip it to the study bounds."""
+    """Download a CHIRPS monthly raster and clip it to the study bounds.
+
+    Streams and decompresses entirely **in memory** (no large disk temp files),
+    so it works even on space-constrained hosts: only the tiny clipped output
+    (a few KB) is written to disk.
+    """
     try:
         import numpy as np
         import rasterio
@@ -68,36 +64,37 @@ def download_rainfall(output: Path | None = None,
     log.info("CHIRPS month: %04d-%02d (mm/month accumulation)", year, month)
 
     url = CHIRPS_MONTHLY.format(year=year, month=month)
-    with tempfile.TemporaryDirectory(prefix="chirps_") as tmp:
-        gz_path = Path(tmp) / "chirps.tif.gz"
-        tif_path = Path(tmp) / "chirps.tif"
-        _download(url, gz_path)
-        with gzip.open(gz_path, "rb") as gz_in, open(tif_path, "wb") as tif_out:
-            shutil.copyfileobj(gz_in, tif_out)
+    log.info("Streaming (in-memory) %s", url)
+    with urllib.request.urlopen(url, timeout=300) as resp:
+        gz_bytes = resp.read()
+    log.info("  downloaded %.1f MB compressed; decompressing in memory", len(gz_bytes) / 1e6)
+    tif_bytes = gzip.decompress(gz_bytes)
+    del gz_bytes
 
-        geom = [mapping(box(*STUDY_AREA.bounds))]
-        with rasterio.open(tif_path) as src:
-            clipped, clip_transform = mask(src, geom, crop=True)
-            data = clipped[0].astype("float32")
-            nodata = src.nodata if src.nodata is not None else -9999.0
-            data[data == nodata] = np.nan
-            data[data < 0] = np.nan
-            crs = src.crs
+    geom = [mapping(box(*STUDY_AREA.bounds))]
+    with rasterio.io.MemoryFile(tif_bytes) as mem, mem.open() as src:
+        clipped, clip_transform = mask(src, geom, crop=True)
+        data = clipped[0].astype("float32")
+        nodata = src.nodata if src.nodata is not None else -9999.0
+        crs = src.crs
+    del tif_bytes
+    data[data == nodata] = np.nan
+    data[data < 0] = np.nan
 
-        out.parent.mkdir(parents=True, exist_ok=True)
-        profile = {
-            "driver": "GTiff", "height": data.shape[0], "width": data.shape[1],
-            "count": 1, "dtype": "float32", "crs": crs,
-            "transform": clip_transform, "nodata": np.nan, "compress": "deflate",
-        }
-        with rasterio.open(out, "w", **profile) as dst:
-            dst.write(data, 1)
-            dst.update_tags(
-                source="CHIRPS v2.0 monthly (data.chc.ucsb.edu)",
-                period=f"{year}-{month:02d}",
-                units="mm/month",
-                study_area=STUDY_AREA.name,
-            )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    profile = {
+        "driver": "GTiff", "height": data.shape[0], "width": data.shape[1],
+        "count": 1, "dtype": "float32", "crs": crs,
+        "transform": clip_transform, "nodata": np.nan, "compress": "deflate",
+    }
+    with rasterio.open(out, "w", **profile) as dst:
+        dst.write(data, 1)
+        dst.update_tags(
+            source="CHIRPS v2.0 monthly (data.chc.ucsb.edu)",
+            period=f"{year}-{month:02d}",
+            units="mm/month",
+            study_area=STUDY_AREA.name,
+        )
 
     valid = data[np.isfinite(data)]
     log.info("Wrote %s  shape=%s  rainfall=[%.1f, %.1f] mm/month",
