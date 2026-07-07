@@ -1,0 +1,34 @@
+# ==========================================================================
+# Urban Flood Intelligence Platform - Python dependencies
+# Tested with Python 3.10 / 3.11
+# ==========================================================================
+
+# --- Core scientific stack ---
+numpy>=1.24,<2.1
+pandas>=2.0
+scipy>=1.10
+
+# --- Geospatial stack ---
+geopandas>=0.14
+shapely>=2.0
+rasterio>=1.3
+rasterstats>=0.19
+pyproj>=3.5
+
+# --- Machine learning ---
+scikit-learn>=1.3
+xgboost>=2.0            # optional; pipeline degrades gracefully if unavailable
+
+# --- Visualization ---
+matplotlib>=3.7
+plotly>=5.18
+folium>=0.15
+branca>=0.7
+
+# --- Dashboard / app ---
+streamlit>=1.30
+streamlit-folium>=0.18
+
+# --- Notebooks (Zerve/Jupyter execution) ---
+ipykernel>=6.25
+nbformat>=5.9
