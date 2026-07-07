@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "urban-flood-intelligence-platform"
+version = "1.0.0"
+description = "Real-time geospatial flood risk scoring and stormwater analysis pipeline (Nairobi)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Joash Omondi" }]
+keywords = ["geospatial", "flood", "hydrology", "risk-scoring", "streamlit", "zerve"]
+
+# Runtime deps. Heavy geospatial libs (rasterio/geopandas) are optional extras
+# so the core engine installs quickly on Zerve; the code degrades gracefully.
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scipy>=1.10",
+    "scikit-learn>=1.3",
+    "matplotlib>=3.7",
+    "plotly>=5.18",
+    "folium>=0.15",
+]
+
+[project.optional-dependencies]
+geo = ["geopandas>=0.14", "shapely>=2.0", "rasterio>=1.3", "rasterstats>=0.19"]
+ml = ["xgboost>=2.0", "joblib>=1.3"]
+app = ["streamlit>=1.30", "streamlit-folium>=0.18"]
+all = [
+    "geopandas>=0.14", "shapely>=2.0", "rasterio>=1.3", "rasterstats>=0.19",
+    "xgboost>=2.0", "joblib>=1.3", "streamlit>=1.30", "streamlit-folium>=0.18",
+]
+
+[project.urls]
+Homepage = "https://github.com/joashomondi/urban-flood-intelligence-platform"
+Repository = "https://github.com/joashomondi/urban-flood-intelligence-platform"
+
+# The engine lives in the top-level ``src`` package so `from src import ...`
+# works after `pip install git+https://github.com/joashomondi/urban-flood-intelligence-platform`.
+[tool.setuptools]
+packages = ["src"]

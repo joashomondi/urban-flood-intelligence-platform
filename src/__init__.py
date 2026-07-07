@@ -20,4 +20,5 @@ __version__ = "1.0.0"
 __all__ = [
     "utils", "data_loader", "terrain_analysis", "hydrology",
     "feature_engineering", "modeling", "risk_scoring", "visualization",
+    "pipeline",
 ]

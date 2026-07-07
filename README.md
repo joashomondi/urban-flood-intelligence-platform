@@ -97,11 +97,18 @@ project-root/
 │   ├── feature_engineering.py
 │   ├── modeling.py
 │   ├── risk_scoring.py
-│   └── visualization.py
+│   ├── visualization.py
+│   └── pipeline.py       # single build_state() used by scripts/app/Zerve
 ├── scripts/
-│   └── run_pipeline.py   # one-command end-to-end run
+│   ├── run_pipeline.py   # one-command end-to-end run
+│   ├── download_dem.py   # fetch real NASA SRTM DEM
+│   └── download_rainfall.py  # fetch real CHIRPS rainfall
 ├── streamlit_app/
 │   └── app.py            # deployable intelligence dashboard
+├── zerve/                # Zerve canvas + deployment adaptation
+│   ├── blocks/           # 6 DAG blocks (01→06)
+│   ├── app/main.py       # Zerve Streamlit deploy entry (zerve.variable)
+│   └── README.md         # build-the-canvas + deploy guide
 ├── outputs/
 │   ├── maps/          # interactive Folium maps (html)
 │   ├── figures/       # static maps + Plotly html
@@ -109,8 +116,13 @@ project-root/
 │   └── models/        # persisted model
 ├── README.md
 ├── architecture.md
+├── pyproject.toml        # pip-installable engine (for Zerve GitHub install)
 └── requirements.txt
 ```
+
+> **Deploying on Zerve?** See [`zerve/README.md`](zerve/README.md) — the pipeline
+> is mapped onto a Zerve canvas (DAG of blocks) with a one-click Streamlit
+> deployment for the [Zerve × HackerEarth challenge](https://zerve.hackerearth.com/).
 
 ---
 
