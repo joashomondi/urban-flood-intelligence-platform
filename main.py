@@ -35,10 +35,13 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-# Make ``src`` importable when run locally from the repo.
-ROOT = Path(__file__).resolve().parent
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+# Make ``src`` importable when run from the repo (any depth) or a flat sandbox.
+_here = Path(__file__).resolve()
+for _p in (_here.parent, *_here.parents):
+    if (_p / "src" / "__init__.py").exists():
+        if str(_p) not in sys.path:
+            sys.path.insert(0, str(_p))
+        break
 
 _REPO_ZIP = (
     "https://github.com/joashomondi/urban-flood-intelligence-platform/"
