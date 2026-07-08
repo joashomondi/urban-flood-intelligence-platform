@@ -9,20 +9,72 @@
 # Uses a real SRTM GeoTIFF / CHIRPS raster from data/raw if present, else
 # synthesises physically-plausible surfaces so the canvas runs anywhere.
 
-# Bootstrap: install the engine if the environment build skipped the git+ line.
+# Bootstrap: Zerve sandboxes often lack ``git``, so ``pip install git+https://…``
+# fails. Download the repo as a ZIP and install locally (or add to sys.path).
+import io
 import subprocess
 import sys
+import tempfile
+import urllib.request
+import zipfile
+from pathlib import Path
 
-_ENGINE = "git+https://github.com/joashomondi/urban-flood-intelligence-platform.git"
-try:
-    import src  # noqa: F401
-except ModuleNotFoundError:
-    print("[01] Installing flood-intelligence engine from GitHub …")
-    subprocess.check_call(
-        [sys.executable, "-m", "pip", "install", "-q", _ENGINE],
-        stdout=subprocess.DEVNULL,
+_REPO_ZIP = (
+    "https://github.com/joashomondi/urban-flood-intelligence-platform/"
+    "archive/refs/heads/main.zip"
+)
+
+
+def _ensure_engine() -> None:
+    try:
+        import src  # noqa: F401
+        return
+    except ModuleNotFoundError:
+        pass
+
+    cache = Path("/tmp/ufip_engine") if Path("/tmp").exists() else Path(tempfile.gettempdir()) / "ufip_engine"
+    if not (cache / "src" / "__init__.py").exists():
+        print("[01] Downloading engine from GitHub (zip, no git) …")
+        raw = urllib.request.urlopen(_REPO_ZIP, timeout=180).read()
+        cache.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+            zf.extractall(cache)
+        extracted = next(cache.glob("urban-flood-intelligence-platform-*"), None)
+        if extracted is None:
+            raise RuntimeError("Download succeeded but repo folder not found in zip.")
+        for item in extracted.iterdir():
+            dest = cache / item.name
+            if dest.exists():
+                continue
+            item.rename(dest)
+        extracted.rmdir()
+
+    if str(cache) not in sys.path:
+        sys.path.insert(0, str(cache))
+
+    try:
+        import src  # noqa: F401
+        print("[01] Engine ready.")
+        return
+    except ModuleNotFoundError:
+        pass
+
+    print("[01] Installing engine (local pip, no git) …")
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", str(cache)],
+        capture_output=True,
+        text=True,
     )
-    print("[01] Engine installed.")
+    if result.returncode != 0:
+        print("[01] pip install failed; using sys.path fallback")
+        if str(cache) not in sys.path:
+            sys.path.insert(0, str(cache))
+
+    import src  # noqa: F401
+    print("[01] Engine ready.")
+
+
+_ensure_engine()
 
 from src import data_loader, utils
 

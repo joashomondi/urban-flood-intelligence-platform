@@ -41,8 +41,9 @@ block_01_ingest ─┬─> block_02_terrain_hydrology ─┐
 
 1. **Create a canvas** in Zerve (or let the agent scaffold one) and open
    **Environments → Requirements**. Paste the contents of
-   [`requirements.txt`](requirements.txt) and build the environment. The first
-   line installs this repo, so `from src import ...` works inside every block.
+   [`requirements.txt`](requirements.txt) and build the environment. Block 01
+   bootstraps the engine automatically (GitHub ZIP download — no `git` CLI
+   needed), so `from src import ...` works in every block after the first run.
 
 2. **Create six Python code blocks**, left to right, and paste the matching file
    from `blocks/` into each. Name the blocks exactly:

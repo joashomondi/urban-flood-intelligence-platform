@@ -36,7 +36,7 @@ import pandas as pd
 import streamlit as st
 
 # Make ``src`` importable when run locally from the repo.
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 

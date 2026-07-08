@@ -8,6 +8,65 @@
 # =============================================================================
 # Every figure produced here flows into the Zerve Output Gallery and can be
 # dropped straight into an Agentic Report or referenced by the deployment.
+import io
+import subprocess
+import sys
+import tempfile
+import urllib.request
+import zipfile
+from pathlib import Path
+
+_REPO_ZIP = (
+    "https://github.com/joashomondi/urban-flood-intelligence-platform/"
+    "archive/refs/heads/main.zip"
+)
+
+
+def _engine_cache() -> Path:
+    fixed = Path("/tmp/ufip_engine")
+    if fixed.parent.exists():
+        return fixed
+    return Path(tempfile.gettempdir()) / "ufip_engine"
+
+
+def _ensure_engine() -> None:
+    try:
+        import src  # noqa: F401
+        return
+    except ModuleNotFoundError:
+        pass
+    cache = _engine_cache()
+    if not (cache / "src" / "__init__.py").exists():
+        print("[engine] Downloading from GitHub (zip) …")
+        raw = urllib.request.urlopen(_REPO_ZIP, timeout=180).read()
+        cache.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+            zf.extractall(cache)
+        extracted = next(cache.glob("urban-flood-intelligence-platform-*"), None)
+        if extracted is None:
+            raise RuntimeError("Repo folder not found in downloaded zip.")
+        for item in extracted.iterdir():
+            dest = cache / item.name
+            if not dest.exists():
+                item.rename(dest)
+        extracted.rmdir()
+    if str(cache) not in sys.path:
+        sys.path.insert(0, str(cache))
+    try:
+        import src  # noqa: F401
+        return
+    except ModuleNotFoundError:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-q", str(cache)],
+            capture_output=True,
+        )
+        if str(cache) not in sys.path:
+            sys.path.insert(0, str(cache))
+        import src  # noqa: F401
+
+
+_ensure_engine()
+
 from src import visualization as viz
 
 try:                          # inherited from blocks 04 + 05
